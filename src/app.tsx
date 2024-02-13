@@ -1,8 +1,46 @@
+import { ChangeEvent, useEffect, useState } from "react";
 import logo from "./assets/logo-nwl-expert.svg";
 import { NewNoteCart } from "./components/new-note-card";
 import { NoteCard } from "./components/note-card";
 
+interface Note{
+  id: string
+  date: Date
+  content: string
+}
+
 export function App() {
+  const [search, setSearch] = useState('')
+  const [notes, setNotes] = useState<Note[]>(() => {
+    const notesOnStorage = localStorage.getItem('notes')
+
+    if (notesOnStorage) {
+      return JSON.parse(notesOnStorage)
+    }
+
+    return []
+  })
+
+  function onNoteCreated(content: string) {
+    const newNote = {
+      id: crypto.randomUUID(),
+      date: new Date,
+      content
+    }
+
+    const notesArray = [newNote, ...notes] 
+
+    setNotes(notesArray)
+
+    localStorage.setItem('notes', JSON.stringify(notesArray))
+  }
+
+  function onSearchChange(event: ChangeEvent<HTMLInputElement>) {
+    setSearch(event.target.value);
+  }
+
+  const filteredNotes = search !== '' ? notes.filter(note => note.content.toLowerCase().includes(search.toLowerCase())) : notes
+
   return (
     <div className="mx-auto max-w-6xl my-12 space-y-6">
       <img src={logo} alt="NLW Expert" />
@@ -10,28 +48,21 @@ export function App() {
         <input 
           type="text" 
           placeholder="Busque em suas notas..." 
-          className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-slate-500" 
+          className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-slate-500"
+          onChange={onSearchChange}
         />
       </form>
       <div className="h-px bg-slate-700" />
 
       <div className="grid grid-cols-3 gap-6 auto-rows-[250px]">
-        <NewNoteCart />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
-        <NoteCard />
+        <NewNoteCart onNoteCreated={onNoteCreated} />
+        {
+          filteredNotes.map(note => {
+            return (
+              <NoteCard note={note} key={note.id}/>
+            )
+          })
+        }
       </div>
     </div>
   )
